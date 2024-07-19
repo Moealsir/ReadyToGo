@@ -49,6 +49,11 @@ pm2 startup
 pm2 save
 clear
 
+# install mysql
+sudo apt update
+sudo apt install mysql-server -y
+sudo systemctl start mysql.service
+
 # cp dir_navigator.sh to /usr/local/bin
 echo "Copying dir_navigator.sh to /bin..."
 sudo cp dir_navigator.sh /bin/
