@@ -1,22 +1,26 @@
 #!/bin/bash
 
 # update and upgrade
+echo ""
 echo "Updating and upgrading..."
 sudo apt-get update
-sudo apt-get upgrade -y
+# sudo apt-get upgrade -y
 clear
 
 # install git
+echo ""
 echo "Installing git..."
 sudo apt-get install git -y
 clear
 
 # install curl
+echo ""
 echo "Installing curl..."
 sudo apt-get install curl -y
 clear
 
 # install latest version of nodejs
+echo ""
 echo "Installing nodejs..."
 curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
 sudo apt-get install -y nodejs
@@ -25,36 +29,43 @@ nvm use --lts
 clear
 
 # install latest version of npm
+echo ""
 echo "Installing npm..."
 sudo npm install -g npm
 clear
 
 # install sshpass 
+echo ""
 echo "Installing sshpass..."
 sudo apt-get install sshpass -y
 
 # install trash-cli
+echo ""
 echo "Installing trash-cli..."
 sudo apt-get install trash-cli -y
 clear
 
 # install python3
+echo ""
 echo "Installing python3..."
 sudo apt-get install python3 -y
 clear
 
 # install pm2 
+echo ""
 npm install pm2@latest -g
 pm2 startup
 pm2 save
 clear
 
 # install mysql
+echo ""
 sudo apt update
 sudo apt install mysql-server -y
 sudo systemctl start mysql.service
 
 # cp dir_navigator.sh to /usr/local/bin
+echo ""
 echo "Copying dir_navigator.sh to /bin..."
 sudo cp dir_navigator.sh /bin/
 clear
