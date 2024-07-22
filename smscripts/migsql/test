@@ -1,0 +1,287 @@
+#!/bin/bash
+
+# Files to store server and user details
+SERVER_DETAILS_FILE="servers.json"
+USER_DETAILS_FILE="users.json"
+
+# Enable debugging
+# set -x
+
+# Function to read input with a prompt
+read_input() {
+    local prompt=$1
+    local default_value=$2
+    local input
+
+    read -p "$prompt [$default_value]: " input
+    echo "${input:-$default_value}"
+}
+
+# Function to save server details to JSON file
+save_server_details() {
+    local nickname=$1
+    local server_user=$2
+    local server_dns=$3
+
+    # Load existing data
+    local data=$(cat "$SERVER_DETAILS_FILE" 2>/dev/null || echo '[]')
+    
+    # Append new server details
+    local new_entry="{\"nickname\":\"$nickname\",\"user\":\"$server_user\",\"dns\":\"$server_dns\"}"
+    local new_data=$(echo "$data" | jq ". += [$new_entry]")
+
+    # Save back to file
+    echo "$new_data" > "$SERVER_DETAILS_FILE"
+}
+
+# Function to save user details to JSON file
+save_user_details() {
+    local username=$1
+    local password=$2
+
+    # Hash the password
+    local hashed_password=$(echo -n "$password" | sha256sum | awk '{print $1}')
+
+    # Load existing data
+    local data=$(cat "$USER_DETAILS_FILE" 2>/dev/null || echo '[]')
+    
+    # Append new user details
+    local new_entry="{\"username\":\"$username\",\"password\":\"$hashed_password\"}"
+    local new_data=$(echo "$data" | jq ". += [$new_entry]")
+
+    # Save back to file
+    echo "$new_data" > "$USER_DETAILS_FILE"
+}
+
+# Function to list server details
+list_server_details() {
+    local data=$(cat "$SERVER_DETAILS_FILE" 2>/dev/null || echo '[]')
+    echo "$data" | jq -r '.[] | "\(.nickname) - \(.user):\(.dns)"'
+}
+
+# Function to edit server details
+edit_server_details() {
+    list_server_details
+    echo ""
+
+    read -p "Enter the nickname of the server to edit: " server_nickname
+    local data=$(cat "$SERVER_DETAILS_FILE" 2>/dev/null || echo '[]')
+    local index=$(echo "$data" | jq -r "map(.nickname == \"$server_nickname\") | index(true)")
+
+    if [ "$index" == "null" ]; then
+        echo "Server not found."
+        return
+    fi
+
+    local server_details=$(echo "$data" | jq ".[$index]")
+    local nickname=$(echo "$server_details" | jq -r ".nickname")
+    local server_user=$(echo "$server_details" | jq -r ".user")
+    local server_dns=$(echo "$server_details" | jq -r ".dns")
+
+    nickname=$(read_input "Enter new nickname" "$nickname")
+    server_user=$(read_input "Enter new server username" "$server_user")
+    server_dns=$(read_input "Enter new server DNS" "$server_dns")
+
+    # Remove old entry and add the updated one
+    local new_entry="{\"nickname\":\"$nickname\",\"user\":\"$server_user\",\"dns\":\"$server_dns\"}"
+    local new_data=$(echo "$data" | jq "del(.[$index]) | . += [$new_entry]")
+
+    echo "$new_data" > "$SERVER_DETAILS_FILE"
+}
+
+# Function to delete server details
+delete_server_details() {
+    list_server_details
+    echo ""
+
+    read -p "Enter the nickname of the server to delete: " server_nickname
+    local data=$(cat "$SERVER_DETAILS_FILE" 2>/dev/null || echo '[]')
+    local index=$(echo "$data" | jq -r "map(.nickname == \"$server_nickname\") | index(true)")
+
+    if [ "$index" == "null" ]; then
+        echo "Server not found."
+        return
+    fi
+
+    # Remove entry
+    local new_data=$(echo "$data" | jq "del(.[$index])")
+
+    echo "$new_data" > "$SERVER_DETAILS_FILE"
+}
+
+# Function to prompt for server details
+prompt_server_details() {
+    local nickname=$(read_input "Enter nickname" "")
+    local server_user=$(read_input "Enter server username" "")
+    local server_dns=$(read_input "Enter server DNS" "")
+
+    save_server_details "$nickname" "$server_user" "$server_dns"
+}
+
+# Function to validate DNS format
+validate_dns() {
+    local dns=$1
+    if [[ $dns =~ ^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9-]*[A-Za-z0-9])$ ]]; then
+        echo "valid"
+    else
+        echo "invalid"
+    fi
+}
+
+# Function to handle the main menu
+main_menu() {
+    echo "1. Add server details"
+    echo "2. Edit server details"
+    echo "3. Delete server details"
+    echo "4. List server details"
+    echo "5. Dump and transfer databases"
+    echo "6. Exit"
+    echo ""
+
+    read -p "Enter your choice: " choice
+    case $choice in
+        1) prompt_server_details ;;
+        2) edit_server_details ;;
+        3) delete_server_details ;;
+        4) list_server_details ;;
+        5) dump_and_transfer_databases ;;
+        6) exit 0 ;;
+        *) echo "Invalid choice"; main_menu ;;
+    esac
+}
+
+# Function to list databases for a user
+list_databases() {
+    local db_user=$1
+    local db_password=$2
+
+    echo "Testing connection with user: $db_user"
+    echo "SHOW DATABASES;" | mysql -u "$db_user" -p"$db_password" -s --skip-column-names 2>error.log
+    
+    if [[ -s error.log ]]; then
+        echo "Error listing databases:"
+        cat error.log
+    else
+        echo "Databases listed successfully."
+    fi
+}
+
+# Function to prompt for database credentials and handle authentication errors
+prompt_db_credentials() {
+    local db_user
+    local db_password
+
+    while true; do
+        db_user=$(read_input "Enter database user" "")
+        read -s -p "Enter database password: " db_password
+        echo ""
+
+        # Trim any extra whitespace or newline characters
+        db_user=$(echo "$db_user" | xargs)
+        db_password=$(echo "$db_password" | xargs)
+
+        if list_databases "$db_user" "$db_password" >/dev/null 2>&1; then
+            echo "$db_user:$db_password"
+            break
+        else
+            echo "Access denied for user '$db_user'. Please try again."
+        fi
+    done
+}
+
+# Function to dump and transfer databases
+dump_and_transfer_databases() {
+    local db_users=()
+    local db_user db_password selected_databases
+
+    while true; do
+        credentials=$(prompt_db_credentials)
+        db_user=$(echo "$credentials" | cut -d':' -f1)
+        db_password=$(echo "$credentials" | cut -d':' -f2)
+        
+        echo "Listing databases for user $db_user"
+        databases=$(list_databases "$db_user" "$db_password")
+        if [[ -z "$databases" ]]; then
+            echo "No databases found or unable to list databases."
+            continue
+        fi
+        echo "$databases"
+        echo ""
+
+        read -p "Enter databases to backup (space-separated by names): " -a selected_databases_names
+
+        echo "Selected databases: ${selected_databases_names[*]}"
+
+        db_users+=("$db_user:$db_password:${selected_databases_names[*]}")
+
+        more_users=$(read_input "Do you want to add another database user? (y/n)" "n")
+        [[ "$more_users" != "y" ]] && break
+    done
+
+    echo ""
+    read -p "Do you want to upload to a server or multiple servers? (s/m): " upload_option
+
+    if [[ "$upload_option" == "s" ]]; then
+        list_server_details
+        read -p "Enter the nickname of the server to use: " server_nickname
+        server_details=$(cat "$SERVER_DETAILS_FILE" | jq -r ".[] | select(.nickname==\"$server_nickname\")")
+        server_user=$(echo "$server_details" | jq -r ".user")
+        server_dns=$(echo "$server_details" | jq -r ".dns")
+
+        for user in "${db_users[@]}"; do
+            db_user=$(echo "$user" | cut -d':' -f1)
+            db_password=$(echo "$user" | cut -d':' -f2)
+            selected_databases=$(echo "$user" | cut -d':' -f3-)
+
+            for db_name in $selected_databases; do
+                echo "Dumping database $db_name..."
+                mysqldump -u "$db_user" -p"$db_password" --opt "$db_name" > "${db_name}.sql"
+
+                echo "Uploading ${db_name}.sql to $server_user@$server_dns..."
+                scp "${db_name}.sql" "${server_user}@${server_dns}:"
+            done
+        done
+
+    elif [[ "$upload_option" == "m" ]]; then
+        selected_servers=()
+        while true; do
+            list_server_details
+            read -p "Enter the nickname of the server to use: " server_nickname
+            selected_servers+=("$server_nickname")
+
+            more_servers=$(read_input "Do you want to add another server? (yes/no)" "no")
+            [[ "$more_servers" != "yes" ]] && break
+        done
+
+        for server_nickname in "${selected_servers[@]}"; do
+            server_details=$(cat "$SERVER_DETAILS_FILE" | jq -r ".[] | select(.nickname==\"$server_nickname\")")
+            server_user=$(echo "$server_details" | jq -r ".user")
+            server_dns=$(echo "$server_details" | jq -r ".dns")
+
+            for user in "${db_users[@]}"; do
+                db_user=$(echo "$user" | cut -d':' -f1)
+                db_password=$(echo "$user" | cut -d':' -f2)
+                selected_databases=$(echo "$user" | cut -d':' -f3-)
+                for db_name in $selected_databases; do
+                    echo "Dumping database $db_name..."
+                    mysqldump -u "$db_user" -p"$db_password" --opt "$db_name" > "${db_name}.sql"
+
+                    echo "Uploading ${db_name}.sql to $server_user@$server_dns..."
+                    scp "${db_name}.sql" "${server_user}@${server_dns}:"
+                done
+            done
+        done
+    fi
+
+    echo "Database dump and transfer complete."
+}
+
+# Main script logic
+main() {
+    while true; do
+        main_menu
+        echo ""
+    done
+}
+
+main "$@"

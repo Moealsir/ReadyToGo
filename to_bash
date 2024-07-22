@@ -143,6 +143,51 @@ bfix() {
     sudo apt-get autoclean
 }
 
+
+## servers functions
+### migsql is a function to backup a database and send to server
+migsql() {
+    # If arguments are not provided, prompt for input
+    if [ -z "$1" ]; then
+        read -p "Enter database user: " db_user
+    else
+        db_user=$1
+    fi
+
+    if [ -z "$2" ]; then
+        read -p "Enter database name: " db_name
+    else
+        db_name=$2
+    fi
+
+    if [ -z "$3" ]; then
+        read -p "Enter server username: " server_user
+    else
+        server_user=$3
+    fi
+
+    if [ -z "$4" ]; then
+        read -p "Enter server name: " server_name
+    else
+        server_name=$4
+    fi
+
+    if [ -z "$5" ]; then
+        read -p "Enter path to dump: " dump_path
+    else
+        dump_path=$5
+    fi
+
+    # Dump the database
+    mysqldump -u "$db_user" -p --opt "$db_name" > "${db_name}.sql"
+
+    # Transfer the dump to the server
+    scp "${db_name}.sql" "${server_user}@${server_name}:${dump_path}"
+
+    echo "Database dump and transfer complete."
+}
+
+
 alias cl="clone_repo"
 alias bf="bfix"
 alias q="python3"  # Launch Python 3 interpreter

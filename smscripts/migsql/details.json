@@ -1,0 +1,26 @@
+{
+    "servers": [
+        {
+            "nickname": "lb-01",
+            "username": "ubuntu",
+            "dns": "52.91.120.57"
+        }
+    ],
+    "users": [
+        {
+            "username": "root",
+            "password": "1234"
+        }
+    ],
+    "users_dbs": [
+        {
+            "username": "root",
+            "databases": [
+                "mysql",
+                "information_schema",
+                "performance_schema", 
+                "sys"
+            ]
+        }
+    ]
+}
