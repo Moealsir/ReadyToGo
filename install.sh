@@ -37,7 +37,7 @@ echo "Copying dir_navigator.sh to /usr/local/bin..."
 sudo cp dir_navigator.sh /usr/local/bin/
 clear
 
-
+# dsfsdf
 # Add file to_bash content to ~/.bashrc
 cat to_bash >> ~/.bashrc
 
