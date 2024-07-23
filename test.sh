@@ -4,6 +4,12 @@ LOGFILE="setup.log"
 ERRORFILE="setup_error.log"
 STATEFILE="setup_state.txt"
 
+# Define colors
+pink='\033[1;35m'    # Pink
+green='\033[0;32m'   # Green
+orange='\033[0;33m'  # Orange
+reset='\033[0m'      # Reset color
+
 # Function to log messages
 log_message() {
     local message=$1
@@ -15,12 +21,6 @@ log_error() {
     local error_message=$1
     echo -e "$(date +"%Y-%m-%d %H:%M:%S") : \033[1;31mERROR : $error_message\033[0m" | tee -a "$ERRORFILE"
 }
-
-# Define colors
-pink='\033[1;35m'    # Pink
-green='\033[0;32m'   # Green
-orange='\033[0;33m'  # Orange
-reset='\033[0m'      # Reset color
 
 # Initialize state file
 initialize_state() {
