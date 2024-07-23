@@ -17,6 +17,7 @@ log_error() {
 
 # Function to update and upgrade the system
 update_and_upgrade() {
+    clear
     log_message "Updating and upgrading..."
     if ! sudo apt-get update; then
         log_error "Failed to update package list"
@@ -27,11 +28,11 @@ update_and_upgrade() {
     #     log_error "Failed to upgrade packages"
     #     return 1
     # fi
-    clear
 }
 
 # Function to install Node.js and npm
 install_nodejs_npm() {
+    clear
     log_message "Installing Node.js v20.15.1 and npm v10.7.0..."
     if ! curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -; then
         log_error "Failed to download and run Node.js setup script"
@@ -41,48 +42,47 @@ install_nodejs_npm() {
         log_error "Failed to install Node.js and npm"
         return 1
     fi
-    clear
 }
 
 # Function to install PM2
 install_pm2() {
+    clear
     log_message "Installing pm2..."
     if ! sudo npm install pm2@latest -g; then
         log_error "Failed to install pm2"
         return 1
     fi
-    clear
 }
 
 # Function to install MySQL
 install_mysql() {
+    clear
     log_message "Installing MySQL..."
     if ! sudo apt update || ! sudo apt install mysql-server -y || ! sudo systemctl start mysql.service; then
         log_error "Failed to install and start MySQL"
         return 1
     fi
-    clear
 }
 
 # Function to copy dir_navigator.sh to /usr/local/bin
 copy_dir_navigator() {
+    clear
     log_message "Copying dir_navigator.sh to /usr/local/bin..."
     if ! sudo cp dir_navigator.sh /usr/local/bin/; then
         log_error "Failed to copy dir_navigator.sh"
         return 1
     fi
-    clear
 }
 
 # Function to add authorized keys
 add_authorized_keys() {
+    clear
     log_message "Adding authorized keys..."
     if ! mkdir -p ~/.ssh || ! touch ~/.ssh/authorized_keys || ! chmod 700 ~/.ssh || ! chmod 600 ~/.ssh/authorized_keys; then
         log_error "Failed to create ~/.ssh/authorized_keys"
         return 1
     fi
     cp authorized_keys ~/.ssh/authorized_keys
-    clear
 }
 
 # Function to add to_bash content to ~/.bashrc
@@ -96,6 +96,7 @@ add_to_bashrc() {
 
 # Function to create gituser, gitmail, token variables and add them to ~/.bashrc
 add_github_credentials() {
+    clear
     read -p "Enter your GitHub username: " gituser
     read -p "Enter your GitHub email: " gitmail
     read -sp "Enter your GitHub token: " token
@@ -114,16 +115,17 @@ add_github_credentials() {
 
 # Function to install nginx
 install_nginx() {
+    clear
     log_message "Installing nginx..."
     if ! sudo apt-get install nginx -y || ! sudo ufw allow ssh || ! sudo ufw allow 'Nginx Full' || ! sudo ufw enable; then
         log_error "Failed to install and configure nginx"
         return 1
     fi
-    clear
 }
 
 # Function to add swap space
 add_swap() {
+    clear
     read -p "Enter the size of swap space in GB: " size
 
     # Check if the input is a positive integer
@@ -181,7 +183,6 @@ vm.vfs_cache_pressure=50
     log_message "Swap file created, configured, and sysctl settings updated successfully."
 
     free -h
-    clear
 }
 
 # Function to prompt user for confirmation before proceeding
@@ -191,6 +192,7 @@ prompt_user() {
 
 # Function to check versions of installed software
 check_versions() {
+    clear
     log_message "Checking versions of installed software..."
 
     local node_version=$(node -v)
@@ -198,7 +200,8 @@ check_versions() {
     local pm2_version=$(pm2 -v)
     local mysql_version=$(mysql --version)
     local nginx_version=$(nginx -v 2>&1)
-
+    
+    clear
     log_message "Node.js version: $node_version"
     log_message "npm version: $npm_version"
     log_message "PM2 version: $pm2_version"
