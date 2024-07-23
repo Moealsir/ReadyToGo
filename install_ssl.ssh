@@ -1,0 +1,18 @@
+#!/bin/bash
+
+install_ssl() {
+    if is_executed "10"; then
+        log_message "SSL already installed. Skipping."
+        return
+    fi
+
+    log_message "Installing SSL certificates..."
+    if ! sudo apt update || ! sudo apt install certbot python3-certbot-nginx -y; then
+        log_error "Failed to install SSL certificates"
+        update_failure "10"
+        return 1
+    fi
+
+    log_message "SSL certificates installed successfully."
+    update_state "10"
+}
