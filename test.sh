@@ -79,7 +79,9 @@ install_mysql() {
     fi
     update_state "4"
 }
-https://github.com/Moealsir/ReadyToGo/security/secret-scanning/unblock-secret/2jeesQsIVhPvkeDJVxAkyvUDSiWnavigator.sh to /usr/local/bin..."
+
+copy_dir_navigator() {
+    log_message "Copying dir_navigator.sh to /usr/local/bin..."
     if ! sudo cp dir_navigator.sh /usr/local/bin/; then
         log_error "Failed to copy dir_navigator.sh"
         return 1
