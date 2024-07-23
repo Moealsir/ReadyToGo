@@ -40,7 +40,7 @@ is_executed() {
     grep -q "^$choice$" "$STATEFILE"
 }
 
-# Functions for each tool/module (same as before)
+# Functions for each tool/module
 update_and_upgrade() {
     log_message "Updating and upgrading..."
     if ! sudo apt-get update; then
@@ -256,8 +256,8 @@ execute_choices() {
 
     for choice in $processed_choices; do
         case $choice in
-            1) install_nodejs_npm ;;
-            2) install_pm2 ;;
+            1) update_and_upgrade ;;
+            2) install_nodejs_npm ;;
             3) add_swap ;;
             4) install_mysql ;;
             5) add_authorized_keys ;;
@@ -351,7 +351,7 @@ while true; do
     fi
 
     # Debug output
-    echo "User choices: $user_choices"
+    # Remove this line if not needed: echo "User choices: $user_choices"
 
     # Execute selected choices
     execute_choices "$user_choices"
