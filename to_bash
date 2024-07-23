@@ -231,6 +231,8 @@ vm.vfs_cache_pressure=50
     sudo sysctl -p
 
     echo "Swap file created, configured, and sysctl settings updated successfully."
+
+    Free -h
 }
 
 
