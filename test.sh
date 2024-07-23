@@ -269,20 +269,42 @@ execute_choices() {
     done
 }
 
+
 # Function to display menu
 display_menu() {
     clear
     echo -e "${pink}Setup Tool Selector${reset}"
     echo "Select the tools/modules you want to install by entering the corresponding numbers separated by spaces (or 'q' to quit):"
+    echo "1) Update and Upgrade"
+    echo "2) Install Node.js and npm"
+    echo "3) Add Swap Space"
+    echo "4) Install MySQL"
+    echo "5) Add Authorized Keys"
+    echo "6) Add GitHub Credentials to ~/.bashrc"
+    echo "7) Install Nginx"
+    echo "8) Check Installed Versions"
     for i in {1..8}; do
         if is_executed "$i"; then
-            echo -e "${green}${i}) Tool $i${reset}"
+            echo -e "${green}${i}) ${descriptions[$i]}${reset}"
         else
-            echo "${i}) Tool $i"
+            echo "${i}) ${descriptions[$i]}"
         fi
     done
     echo -n "Enter your choices: "
 }
+
+# Define tool descriptions
+declare -A descriptions
+descriptions=(
+    [1]="Update and Upgrade"
+    [2]="Install Node.js and npm"
+    [3]="Add Swap Space"
+    [4]="Install MySQL"
+    [5]="Add Authorized Keys"
+    [6]="Add GitHub Credentials to ~/.bashrc"
+    [7]="Install Nginx"
+    [8]="Check Installed Versions"
+)
 
 # Function to reset the color
 reset_colors() {
