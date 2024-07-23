@@ -20,6 +20,15 @@ source add_swap.sh
 source add_authorized_keys.sh
 source add_to_bashrc.sh
 source install_nginx.sh
+source configure_firewall.sh
+source install_ssl.sh
+source install_docker.sh
+source install_fail2ban.sh
+source manage_users.sh
+source configure_backups.sh
+source install_monitoring_tools.sh
+source configure_log_rotation.sh
+source schedule_security_updates.sh
 
 # Function to log messages
 log_message() {
@@ -72,7 +81,7 @@ display_menu() {
     clear
     echo -e "${pink}Choose a task:${reset}"
     
-    for choice in $(seq 0 8); do
+    for choice in $(seq 0 17); do
         if is_executed "$choice"; then
             echo -e "$choice) ${green}$(get_choice_description "$choice")${reset}"
         elif is_failed "$choice"; then
@@ -95,6 +104,15 @@ get_choice_description() {
         6) echo "Add authorized_keys";;
         7) echo "Add to_bash content to .bashrc";;
         8) echo "Install nginx";;
+        9) echo "Configure Firewall";;
+        10) echo "Install SSL Certificates";;
+        11) echo "Install Docker and Docker Compose";;
+        12) echo "Install Fail2ban";;
+        13) echo "Manage Users";;
+        14) echo "Configure Backups";;
+        15) echo "Install Monitoring Tools";;
+        16) echo "Configure Log Rotation";;
+        17) echo "Schedule Security Updates";;
     esac
 }
 
@@ -122,6 +140,15 @@ while true; do
         6) add_authorized_keys;;
         7) add_to_bashrc;;
         8) install_nginx;;
+        9) configure_firewall;;
+        10) install_ssl;;
+        11) install_docker;;
+        12) install_fail2ban;;
+        13) manage_users;;
+        14) configure_backups;;
+        15) install_monitoring_tools;;
+        16) configure_log_rotation;;
+        17) schedule_security_updates;;
         r) reset_colors;;
         q) break;;
         *) echo "Invalid choice!";;
