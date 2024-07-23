@@ -13,12 +13,13 @@ log_message() {
 # Function to log errors
 log_error() {
     local error_message=$1
-    echo "$(date +"%Y-%m-%d %H:%M:%S") : ERROR : $error_message" | tee -a "$ERRORFILE"
+    echo -e "$(date +"%Y-%m-%d %H:%M:%S") : \033[1;31mERROR : $error_message\033[0m" | tee -a "$ERRORFILE"
 }
 
 # Define colors
 pink='\033[1;35m'
 green='\033[0;32m'
+orange='\033[0;33m'
 reset='\033[0m'
 
 # Initialize state file
@@ -46,6 +47,8 @@ update_and_upgrade() {
     if ! sudo apt-get update; then
         log_error "Failed to update package list"
         return 1
+    else
+        log_message "Package list updated successfully."
     fi
 }
 
@@ -58,6 +61,8 @@ install_nodejs_npm() {
     if ! sudo apt install -y nodejs; then
         log_error "Failed to install Node.js and npm"
         return 1
+    else
+        log_message "Node.js and npm installed successfully."
     fi
     update_state "1"
 }
@@ -67,6 +72,8 @@ install_pm2() {
     if ! sudo npm install pm2@latest -g; then
         log_error "Failed to install pm2"
         return 1
+    else
+        log_message "pm2 installed successfully."
     fi
     update_state "2"
 }
@@ -76,6 +83,8 @@ install_mysql() {
     if ! sudo apt update || ! sudo apt install mysql-server -y || ! sudo systemctl start mysql.service; then
         log_error "Failed to install and start MySQL"
         return 1
+    else
+        log_message "MySQL installed and started successfully."
     fi
     update_state "4"
 }
@@ -85,6 +94,8 @@ copy_dir_navigator() {
     if ! sudo cp dir_navigator.sh /usr/local/bin/; then
         log_error "Failed to copy dir_navigator.sh"
         return 1
+    else
+        log_message "dir_navigator.sh copied successfully."
     fi
 }
 
@@ -95,6 +106,7 @@ add_authorized_keys() {
         return 1
     fi
     cp authorized_keys ~/.ssh/authorized_keys
+    log_message "Authorized keys added successfully."
     update_state "5"
 }
 
@@ -106,6 +118,7 @@ add_to_bashrc() {
     fi
     copy_dir_navigator
     add_github_credentials
+    log_message "to_bash content added to ~/.bashrc successfully."
     update_state "6"
 }
 
@@ -131,6 +144,8 @@ install_nginx() {
     if ! sudo apt-get install nginx -y || ! sudo ufw allow ssh || ! sudo ufw allow 'Nginx Full' || ! sudo ufw enable; then
         log_error "Failed to install and configure nginx"
         return 1
+    else
+        log_message "Nginx installed and configured successfully."
     fi
     update_state "7"
 }
@@ -235,13 +250,13 @@ process_choices() {
                     result+="$i "
                 done
             else
-                echo "Invalid range: $part. Skipping."
+                log_error "Invalid range: $part. Skipping."
             fi
         # Handle individual numbers
         elif [[ $part =~ ^[0-9]+$ ]]; then
             result+="$part "
         else
-            echo "Invalid input: $part. Skipping."
+            log_error "Invalid input: $part. Skipping."
         fi
     done
 
@@ -251,7 +266,6 @@ process_choices() {
 # Function to select and execute chosen tools/modules
 execute_choices() {
     local choices=$1
-    local processed_choices
     processed_choices=$(process_choices "$choices")
 
     for choice in $processed_choices; do
@@ -264,7 +278,7 @@ execute_choices() {
             6) add_to_bashrc ;;
             7) install_nginx ;;
             8) check_versions ;;
-            *) echo "Invalid option $choice. Skipping." ;;
+            *) log_error "Invalid option $choice. Skipping." ;;
         esac
     done
 }
@@ -322,7 +336,7 @@ reset_colors() {
             > "$STATEFILE"
             ;;
         *)
-            echo "Invalid choice. Exiting."
+            log_error "Invalid choice. Exiting."
             exit 1
             ;;
     esac
