@@ -360,7 +360,7 @@ execute_choices() {
 
 # Function to display menu
 display_menu() {
-    clear
+    # clear
     echo -e "${pink}Setup Tool Selector${reset}"
     echo "Select the tools/modules you want to install by entering the corresponding numbers separated by spaces (or 'q' to quit):"
     for i in {1..8}; do
