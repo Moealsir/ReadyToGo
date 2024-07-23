@@ -274,21 +274,46 @@ display_menu() {
     clear
     echo -e "${pink}Setup Tool Selector${reset}"
     echo "Select the tools/modules you want to install by entering the corresponding numbers separated by spaces:"
-    echo "1) Install Node.js and npm"
-    echo "2) Install pm2"
-    echo "3) Add Swap Space"
-    echo "4) Install MySQL"
-    echo "5) Add Authorized Keys"
-    echo "6) Add to ~/.bashrc"
-    echo "7) Install nginx"
-    echo "8) Check Installed Versions"
-    for i in {1..8}; do
-        if is_executed "$i"; then
-            echo -e "${green}${i}) $(echo "Tool $i" | sed -e "s/^/[$green/ - $reset/")${reset}"
-        else
-            echo "${i}) Tool $i"
-        fi
-    done
+    if is_executed "1"; then
+        echo -e "${green}1) Install Node.js and npm${reset}"
+    else
+        echo "1) Install Node.js and npm"
+    fi
+    if is_executed "2"; then
+        echo -e "${green}2) Install pm2${reset}"
+    else
+        echo "2) Install pm2"
+    fi
+    if is_executed "3"; then
+        echo -e "${green}3) Add Swap Space${reset}"
+    else
+        echo "3) Add Swap Space"
+    fi
+    if is_executed "4"; then
+        echo -e "${green}4) Install MySQL${reset}"
+    else
+        echo "4) Install MySQL"
+    fi
+    if is_executed "5"; then
+        echo -e "${green}5) Add Authorized Keys${reset}"
+    else
+        echo "5) Add Authorized Keys"
+    fi
+    if is_executed "6"; then
+        echo -e "${green}6) Add to ~/.bashrc${reset}"
+    else
+        echo "6) Add to ~/.bashrc"
+    fi
+    if is_executed "7"; then
+        echo -e "${green}7) Install nginx${reset}"
+    else
+        echo "7) Install nginx"
+    fi
+    if is_executed "8"; then
+        echo -e "${green}8) Check Installed Versions${reset}"
+    else
+        echo "8) Check Installed Versions"
+    fi
     echo -n "Enter your choices: "
 }
 
