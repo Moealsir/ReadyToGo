@@ -17,10 +17,10 @@ log_error() {
 }
 
 # Define colors
-pink='\033[1;35m'
-green='\033[0;32m'
-orange='\033[0;33m'
-reset='\033[0m'
+pink='\033[1;35m'    # Pink
+green='\033[0;32m'   # Green
+orange='\033[0;33m'  # Orange
+reset='\033[0m'      # Reset color
 
 # Initialize state file
 initialize_state() {
@@ -53,46 +53,81 @@ update_and_upgrade() {
 }
 
 install_nodejs_npm() {
+    if is_executed "2"; then
+        log_message "Node.js and npm already installed. Skipping."
+        return
+    fi
+
     log_message "Installing Node.js v20.15.1 and npm v10.7.0..."
+
+    # Step 1: Add Node.js repository for version 20.x
+    log_message "Adding Node.js repository..."
     if ! curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -; then
         log_error "Failed to download and run Node.js setup script"
+        echo -e "${orange}Failed to add Node.js repository${reset}"
         return 1
     fi
+
+    # Step 2: Install Node.js and npm
+    log_message "Installing Node.js and npm..."
     if ! sudo apt install -y nodejs; then
         log_error "Failed to install Node.js and npm"
+        echo -e "${orange}Failed to install Node.js and npm${reset}"
         return 1
-    else
-        log_message "Node.js and npm installed successfully."
     fi
-    update_state "1"
+
+    # Step 3: Verify installation
+    node_version=$(node -v)
+    npm_version=$(npm -v)
+
+    log_message "Node.js version: $node_version"
+    log_message "npm version: $npm_version"
+
+    # Step 4: Update state file
+    update_state "2"
+
+    log_message "Node.js and npm installed successfully."
 }
 
 install_pm2() {
+    if is_executed "3"; then
+        log_message "pm2 already installed. Skipping."
+        return
+    fi
+
     log_message "Installing pm2..."
     if ! sudo npm install pm2@latest -g; then
         log_error "Failed to install pm2"
+        echo -e "${orange}Failed to install pm2${reset}"
         return 1
     else
         log_message "pm2 installed successfully."
     fi
-    update_state "2"
+    update_state "3"
 }
 
 install_mysql() {
+    if is_executed "5"; then
+        log_message "MySQL already installed. Skipping."
+        return
+    fi
+
     log_message "Installing MySQL..."
     if ! sudo apt update || ! sudo apt install mysql-server -y || ! sudo systemctl start mysql.service; then
         log_error "Failed to install and start MySQL"
+        echo -e "${orange}Failed to install and start MySQL${reset}"
         return 1
     else
         log_message "MySQL installed and started successfully."
     fi
-    update_state "4"
+    update_state "5"
 }
 
 copy_dir_navigator() {
     log_message "Copying dir_navigator.sh to /usr/local/bin..."
     if ! sudo cp dir_navigator.sh /usr/local/bin/; then
         log_error "Failed to copy dir_navigator.sh"
+        echo -e "${orange}Failed to copy dir_navigator.sh${reset}"
         return 1
     else
         log_message "dir_navigator.sh copied successfully."
@@ -100,29 +135,46 @@ copy_dir_navigator() {
 }
 
 add_authorized_keys() {
+    if is_executed "6"; then
+        log_message "Authorized keys already added. Skipping."
+        return
+    fi
+
     log_message "Adding authorized keys..."
     if ! mkdir -p ~/.ssh || ! touch ~/.ssh/authorized_keys || ! chmod 700 ~/.ssh || ! chmod 600 ~/.ssh/authorized_keys; then
         log_error "Failed to create ~/.ssh/authorized_keys"
+        echo -e "${orange}Failed to create ~/.ssh/authorized_keys${reset}"
         return 1
     fi
     cp authorized_keys ~/.ssh/authorized_keys
     log_message "Authorized keys added successfully."
-    update_state "5"
+    update_state "6"
 }
 
 add_to_bashrc() {
+    if is_executed "7"; then
+        log_message "GitHub credentials already added to ~/.bashrc. Skipping."
+        return
+    fi
+
     log_message "Adding to_bash content to ~/.bashrc..."
     if ! cat to_bash >> ~/.bashrc; then
         log_error "Failed to append to_bash content to ~/.bashrc"
+        echo -e "${orange}Failed to append to_bash content to ~/.bashrc${reset}"
         return 1
     fi
     copy_dir_navigator
     add_github_credentials
     log_message "to_bash content added to ~/.bashrc successfully."
-    update_state "6"
+    update_state "7"
 }
 
 add_github_credentials() {
+    if is_executed "7"; then
+        log_message "GitHub credentials already added to ~/.bashrc. Skipping."
+        return
+    fi
+
     read -p "Enter your GitHub username: " gituser
     read -p "Enter your GitHub email: " gitmail
     read -sp "Enter your GitHub token: " token
@@ -137,25 +189,39 @@ add_github_credentials() {
         echo "export token=\"$token\""
         echo ""
     } >> ~/.bashrc
+
+    update_state "7"
 }
 
 install_nginx() {
+    if is_executed "8"; then
+        log_message "Nginx already installed. Skipping."
+        return
+    fi
+
     log_message "Installing nginx..."
     if ! sudo apt-get install nginx -y || ! sudo ufw allow ssh || ! sudo ufw allow 'Nginx Full' || ! sudo ufw enable; then
         log_error "Failed to install and configure nginx"
+        echo -e "${orange}Failed to install and configure nginx${reset}"
         return 1
     else
         log_message "Nginx installed and configured successfully."
     fi
-    update_state "7"
+    update_state "8"
 }
 
 add_swap() {
+    if is_executed "4"; then
+        log_message "Swap space already added. Skipping."
+        return
+    fi
+
     read -p "Enter the size of swap space in GB: " size
 
     # Check if the input is a positive integer
     if ! [[ "$size" =~ ^[0-9]+$ ]]; then
         log_error "Error: The size must be a positive integer."
+        echo -e "${orange}Error: The size must be a positive integer.${reset}"
         return 1
     fi
 
@@ -164,31 +230,37 @@ add_swap() {
     # Create the swap file
     if ! sudo fallocate -l "${size}G" /swapfile; then
         log_error "Failed to create swapfile"
+        echo -e "${orange}Failed to create swapfile${reset}"
         return 1
     fi
 
     if ! sudo chmod 600 /swapfile; then
         log_error "Failed to set permissions on swapfile"
+        echo -e "${orange}Failed to set permissions on swapfile${reset}"
         return 1
     fi
 
     if ! sudo mkswap /swapfile; then
         log_error "Failed to format swapfile"
+        echo -e "${orange}Failed to format swapfile${reset}"
         return 1
     fi
 
     if ! sudo swapon /swapfile; then
         log_error "Failed to enable swapfile"
+        echo -e "${orange}Failed to enable swapfile${reset}"
         return 1
     fi
 
     if ! sudo cp /etc/fstab /etc/fstab.bak; then
         log_error "Failed to backup /etc/fstab"
+        echo -e "${orange}Failed to backup /etc/fstab${reset}"
         return 1
     fi
 
     if ! grep -q '/swapfile' /etc/fstab || ! echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab; then
         log_error "Failed to add swapfile entry to /etc/fstab"
+        echo -e "${orange}Failed to add swapfile entry to /etc/fstab${reset}"
         return 1
     fi
 
@@ -197,18 +269,20 @@ vm.swappiness=10
 vm.vfs_cache_pressure=50
 " | sudo tee -a /etc/sysctl.conf; then
         log_error "Failed to add sysctl parameters"
+        echo -e "${orange}Failed to add sysctl parameters${reset}"
         return 1
     fi
 
     if ! sudo sysctl -p; then
         log_error "Failed to apply new sysctl settings"
+        echo -e "${orange}Failed to apply new sysctl settings${reset}"
         return 1
     fi
 
     log_message "Swap file created, configured, and sysctl settings updated successfully."
 
     free -h
-    update_state "3"
+    update_state "4"
 }
 
 check_versions() {
@@ -312,37 +386,6 @@ descriptions=(
     [8]="Install Nginx"
     [9]="Check Installed Versions"
 )
-
-# Function to reset the color
-reset_colors() {
-    echo "Select options to reset colors:"
-    echo "1) Reset color for one option"
-    echo "2) Reset color for multiple options"
-    echo "3) Reset all colors"
-    read -r reset_choice
-
-    case $reset_choice in
-        1) 
-            echo "Enter the option number to reset color (1-8): "
-            read -r option
-            sed -i "/^$option$/d" "$STATEFILE"
-            ;;
-        2)
-            echo "Enter the option numbers to reset colors (e.g., 1 2 3): "
-            read -r options
-            for option in $options; do
-                sed -i "/^$option$/d" "$STATEFILE"
-            done
-            ;;
-        3)
-            > "$STATEFILE"
-            ;;
-        *)
-            log_error "Invalid choice. Exiting."
-            exit 1
-            ;;
-    esac
-}
 
 # Main script loop
 initialize_state
