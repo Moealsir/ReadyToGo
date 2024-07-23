@@ -74,6 +74,18 @@ copy_dir_navigator() {
     clear
 }
 
+
+add_authorized_keys() {
+    log_message "Adding authorized keys..."
+    if ! mkdir -p ~/.ssh || ! touch ~/.ssh/authorized_keys || ! chmod 700 ~/.ssh || ! chmod 600 ~/.ssh/authorized_keys; then
+        log_error "Failed to create ~/.ssh/authorized_keys"
+        return 1
+    fi
+    cp authorized_keys ~/.ssh/authorized_keys
+    clear
+
+}
+
 # Function to add to_bash content to ~/.bashrc
 add_to_bashrc() {
     log_message "Adding to_bash content to ~/.bashrc..."
@@ -142,18 +154,58 @@ add_swap() {
     clear
 }
 
+# Function to prompt user for confirmation before proceeding
+prompt_user() {
+    read -p "Press Enter to proceed to the next step..."
+}
 
+# Function to check versions of installed software
+check_versions() {
+    log_message "Checking versions of installed software..."
+
+    local node_version=$(node -v)
+    local npm_version=$(npm -v)
+    local pm2_version=$(pm2 -v)
+    local mysql_version=$(mysql --version)
+    local nginx_version=$(nginx -v 2>&1)
+
+    log_message "Node.js version: $node_version"
+    log_message "npm version: $npm_version"
+    log_message "PM2 version: $pm2_version"
+    log_message "MySQL version: $mysql_version"
+    log_message "Nginx version: $nginx_version"
+
+    echo "Installed versions:"
+    echo "Node.js: $node_version"
+    echo "npm: $npm_version"
+    echo "PM2: $pm2_version"
+    echo "MySQL: $mysql_version"
+    echo "Nginx: $nginx_version"
+}
 
 # Main script execution
 update_and_upgrade
+prompt_user
 install_nodejs_npm
+prompt_user
 install_pm2
+prompt_user
 install_mysql
+prompt_user
 copy_dir_navigator
+prompt_user
 add_to_bashrc
+prompt_user
+add_authorized_keys
+prompt_user
 add_github_credentials
+prompt_user
 install_nginx
+prompt_user
 add_swap
+prompt_user
 
 log_message "Setup complete."
+check_versions
+
 log_message "Please run source ~/.bashrc"
