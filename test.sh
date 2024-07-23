@@ -2,6 +2,7 @@
 
 LOGFILE="setup.log"
 ERRORFILE="setup_error.log"
+STATEFILE="setup_state.txt"
 
 # Function to log messages
 log_message() {
@@ -17,21 +18,35 @@ log_error() {
 
 # Define colors
 pink='\033[1;35m'
+green='\033[0;32m'
 reset='\033[0m'
 
-# Functions for each tool/module
+# Initialize state file
+initialize_state() {
+    if [ ! -f "$STATEFILE" ]; then
+        touch "$STATEFILE"
+    fi
+}
 
+# Update the state file with the executed choice
+update_state() {
+    local choice=$1
+    echo "$choice" >> "$STATEFILE"
+}
+
+# Check if a choice has been executed
+is_executed() {
+    local choice=$1
+    grep -q "^$choice$" "$STATEFILE"
+}
+
+# Functions for each tool/module (same as before)
 update_and_upgrade() {
     log_message "Updating and upgrading..."
     if ! sudo apt-get update; then
         log_error "Failed to update package list"
         return 1
     fi
-    # Uncomment the line below if you want to perform the upgrade
-    # if ! sudo apt-get upgrade -y; then
-    #     log_error "Failed to upgrade packages"
-    #     return 1
-    # fi
 }
 
 install_nodejs_npm() {
@@ -44,6 +59,7 @@ install_nodejs_npm() {
         log_error "Failed to install Node.js and npm"
         return 1
     fi
+    update_state "1"
 }
 
 install_pm2() {
@@ -52,6 +68,7 @@ install_pm2() {
         log_error "Failed to install pm2"
         return 1
     fi
+    update_state "2"
 }
 
 install_mysql() {
@@ -60,6 +77,7 @@ install_mysql() {
         log_error "Failed to install and start MySQL"
         return 1
     fi
+    update_state "4"
 }
 
 copy_dir_navigator() {
@@ -77,6 +95,7 @@ add_authorized_keys() {
         return 1
     fi
     cp authorized_keys ~/.ssh/authorized_keys
+    update_state "5"
 }
 
 add_to_bashrc() {
@@ -87,6 +106,7 @@ add_to_bashrc() {
     fi
     copy_dir_navigator
     add_github_credentials
+    update_state "6"
 }
 
 add_github_credentials() {
@@ -112,6 +132,7 @@ install_nginx() {
         log_error "Failed to install and configure nginx"
         return 1
     fi
+    update_state "7"
 }
 
 add_swap() {
@@ -172,6 +193,7 @@ vm.vfs_cache_pressure=50
     log_message "Swap file created, configured, and sysctl settings updated successfully."
 
     free -h
+    update_state "3"
 }
 
 check_versions() {
@@ -247,20 +269,55 @@ execute_choices() {
     done
 }
 
+# Function to display menu
+display_menu() {
+    clear
+    echo -e "${pink}Setup Tool Selector${reset}"
+    echo "Select the tools/modules you want to install by entering the corresponding numbers separated by spaces:"
+    for i in {1..8}; do
+        if is_executed "$i"; then
+            echo -e "${green}${i}) $(echo "Tool $i" | sed -e "s/^/[$green/ - $reset/")${reset}"
+        else
+            echo "${i}) Tool $i"
+        fi
+    done
+    echo -n "Enter your choices: "
+}
+
+# Function to reset the color
+reset_colors() {
+    echo "Select options to reset colors:"
+    echo "1) Reset color for one option"
+    echo "2) Reset color for multiple options"
+    echo "3) Reset all colors"
+    read -r reset_choice
+
+    case $reset_choice in
+        1) 
+            echo "Enter the option number to reset color (1-8): "
+            read -r option
+            sed -i "/^$option$/d" "$STATEFILE"
+            ;;
+        2)
+            echo "Enter the option numbers to reset colors (e.g., 1 2 3): "
+            read -r options
+            for option in $options; do
+                sed -i "/^$option$/d" "$STATEFILE"
+            done
+            ;;
+        3)
+            > "$STATEFILE"
+            ;;
+        *)
+            echo "Invalid choice. Exiting."
+            exit 1
+            ;;
+    esac
+}
+
 # Main script
-update_and_upgrade
-clear
-echo -e "${pink}Setup Tool Selector${reset}"
-echo "Select the tools/modules you want to install by entering the corresponding numbers separated by spaces:"
-echo "1) Install Node.js and npm"
-echo "2) Install PM2"
-echo "3) Add swap space"
-echo "4) Install MySQL"
-echo "5) Add content to ~/.bashrc"
-echo "6) Add authorized keys"
-echo "7) Install Nginx"
-echo "8) Check installed versions"
-echo -n "Enter your choices: "
+initialize_state
+display_menu
 read -r user_choices
 
 # Debug output
