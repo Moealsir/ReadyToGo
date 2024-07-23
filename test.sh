@@ -220,8 +220,20 @@ execute_choices() {
 # Main script
 clear
 echo -e "${pink}Setup Tool Selector${reset}"
-echo "Select the tools/modules you want to install (e.g., 1 2 5 10):"
-echo -n "Enter your choices separated by spaces: "
+echo "Select the tools/modules you want to install by entering the corresponding numbers separated by spaces:"
+echo "1) Update and Upgrade"
+echo "2) Install Node.js and npm"
+echo "3) Install PM2"
+echo "4) Install MySQL"
+echo "5) Copy dir_navigator.sh"
+echo "6) Add authorized keys"
+echo "7) Add content to ~/.bashrc"
+echo "8) Add GitHub credentials"
+echo "9) Install Nginx"
+echo "10) Add swap space"
+echo "11) Check installed versions"
+
+echo -n "Enter your choices: "
 read -r user_choices
 
 # Debug output
