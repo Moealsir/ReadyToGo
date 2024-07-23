@@ -274,6 +274,14 @@ display_menu() {
     clear
     echo -e "${pink}Setup Tool Selector${reset}"
     echo "Select the tools/modules you want to install by entering the corresponding numbers separated by spaces:"
+    echo "1) Install Node.js and npm"
+    echo "2) Install pm2"
+    echo "3) Add Swap Space"
+    echo "4) Install MySQL"
+    echo "5) Add Authorized Keys"
+    echo "6) Add to ~/.bashrc"
+    echo "7) Install nginx"
+    echo "8) Check Installed Versions"
     for i in {1..8}; do
         if is_executed "$i"; then
             echo -e "${green}${i}) $(echo "Tool $i" | sed -e "s/^/[$green/ - $reset/")${reset}"
