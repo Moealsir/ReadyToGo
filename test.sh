@@ -221,7 +221,11 @@ execute_choices() {
 clear
 echo -e "${pink}Setup Tool Selector${reset}"
 echo "Select the tools/modules you want to install (e.g., 1 2 5 10):"
-read -p "Enter your choices separated by spaces: " user_choices
+echo -n "Enter your choices separated by spaces: "
+read -r user_choices
+
+# Debug output
+echo "User choices: $user_choices"
 
 # Execute selected choices
 execute_choices "$user_choices"
