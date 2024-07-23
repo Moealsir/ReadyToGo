@@ -274,14 +274,6 @@ display_menu() {
     clear
     echo -e "${pink}Setup Tool Selector${reset}"
     echo "Select the tools/modules you want to install by entering the corresponding numbers separated by spaces (or 'q' to quit):"
-    echo "1) Update and Upgrade"
-    echo "2) Install Node.js and npm"
-    echo "3) Add Swap Space"
-    echo "4) Install MySQL"
-    echo "5) Add Authorized Keys"
-    echo "6) Add GitHub Credentials to ~/.bashrc"
-    echo "7) Install Nginx"
-    echo "8) Check Installed Versions"
     for i in {1..8}; do
         if is_executed "$i"; then
             echo -e "${green}${i}) ${descriptions[$i]}${reset}"
@@ -349,9 +341,6 @@ while true; do
         echo "Exiting..."
         break
     fi
-
-    # Debug output
-    # Remove this line if not needed: echo "User choices: $user_choices"
 
     # Execute selected choices
     execute_choices "$user_choices"
