@@ -276,7 +276,7 @@ display_menu() {
     echo "Select the tools/modules you want to install by entering the corresponding numbers separated by spaces (or 'q' to quit):"
     for i in {1..8}; do
         if is_executed "$i"; then
-            echo -e "${green}${i}) $(echo "Tool $i" | sed -e "s/^/[$green/ - $reset/")${reset}"
+            echo -e "${green}${i}) Tool $i${reset}"
         else
             echo "${i}) Tool $i"
         fi
