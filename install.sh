@@ -117,3 +117,4 @@ add_github_credentials
 install_nginx
 
 log_message "Setup complete."
+log_message "Run command source ~/.bashrc"
