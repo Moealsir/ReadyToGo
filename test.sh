@@ -331,7 +331,7 @@ get_choice_description() {
         6) echo "Add authorized_keys";;
         7) echo "Add to_bash content to .bashrc";;
         8) echo "Install nginx";;
-        r) echo "Reset colors";;
+        0) echo "Reset colors";;
     esac
 }
 
@@ -358,7 +358,7 @@ while true; do
         6) add_authorized_keys;;
         7) add_to_bashrc;;
         8) install_nginx;;
-        r) reset_colors;;
+        0) reset_colors;;
         q) break;;
         *) echo "Invalid choice!";;
     esac
