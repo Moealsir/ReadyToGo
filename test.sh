@@ -323,6 +323,7 @@ display_menu() {
 # Function to get choice description
 get_choice_description() {
     case $1 in
+        0) echo "Reset colors";;
         1) echo "Update and upgrade";;
         2) echo "Install Node.js and npm";;
         3) echo "Install pm2";;
@@ -331,7 +332,8 @@ get_choice_description() {
         6) echo "Add authorized_keys";;
         7) echo "Add to_bash content to .bashrc";;
         8) echo "Install nginx";;
-        0) echo "Reset colors";;
+        r) echo "Reset colors";;
+
     esac
 }
 
@@ -348,8 +350,9 @@ initialize_state
 while true; do
     display_menu
 
-    read -p "Enter your choice: " choice
+    read -p "Enter your choice: ('r' to reset colors, 'q' to quit)" choice
     case $choice in
+        0) reset_colors;;
         1) update_and_upgrade;;
         2) install_nodejs_npm;;
         3) install_pm2;;
@@ -358,7 +361,7 @@ while true; do
         6) add_authorized_keys;;
         7) add_to_bashrc;;
         8) install_nginx;;
-        0) reset_colors;;
+        r) reset_colors;;
         q) break;;
         *) echo "Invalid choice!";;
     esac
