@@ -187,6 +187,53 @@ migsql() {
     echo "Database dump and transfer complete."
 }
 
+# add a permanent swap file
+sp() {
+    if [ -z "$1" ]; then
+        echo "Usage: sp <size-in-GB>"
+        return 1
+    fi
+
+    # Check if the argument is a positive integer
+    if ! [[ "$1" =~ ^[0-9]+$ ]]; then
+        echo "Error: The size must be a positive integer."
+        return 1
+    fi
+
+    # Define the size
+    local size="${1}G"
+
+    # Create the swap file
+    sudo fallocate -l "$size" /swapfile
+
+    # Set the correct permissions
+    sudo chmod 600 /swapfile
+
+    # Make the swap file
+    sudo mkswap /swapfile
+
+    # Enable the swap file
+    sudo swapon /swapfile
+
+    # Backup the fstab file
+    sudo cp /etc/fstab /etc/fstab.bak
+
+    # Add the swap file entry to /etc/fstab for persistence
+    grep -q '/swapfile' /etc/fstab || echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+
+    # Add sysctl parameters
+    echo "
+vm.swappiness=10
+vm.vfs_cache_pressure=50
+" | sudo tee -a /etc/sysctl.conf
+
+    # Apply the new sysctl settings
+    sudo sysctl -p
+
+    echo "Swap file created, configured, and sysctl settings updated successfully."
+}
+
+
 
 alias cl="clone_repo"
 alias bf="bfix"
