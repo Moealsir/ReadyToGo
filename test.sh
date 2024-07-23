@@ -120,9 +120,10 @@ install_pm2() {
         echo -e "${orange}Failed to install pm2${reset}"
         update_failure "3"
         return 1
+    else
+        log_message "pm2 installed successfully."
     fi
     update_state "3"
-    log_message "pm2 installed successfully."
 }
 
 install_mysql() {
@@ -137,9 +138,10 @@ install_mysql() {
         echo -e "${orange}Failed to install and start MySQL${reset}"
         update_failure "5"
         return 1
+    else
+        log_message "MySQL installed and started successfully."
     fi
     update_state "5"
-    log_message "MySQL installed and started successfully."
 }
 
 copy_dir_navigator() {
@@ -149,8 +151,9 @@ copy_dir_navigator() {
         echo -e "${orange}Failed to copy dir_navigator.sh${reset}"
         update_failure "4"
         return 1
+    else
+        log_message "dir_navigator.sh copied successfully."
     fi
-    log_message "dir_navigator.sh copied successfully."
 }
 
 add_authorized_keys() {
@@ -184,6 +187,7 @@ add_to_bashrc() {
         update_failure "7"
         return 1
     fi
+    copy_dir_navigator
     add_github_credentials
     log_message "to_bash content added to ~/.bashrc successfully."
     update_state "7"
@@ -225,9 +229,10 @@ install_nginx() {
         echo -e "${orange}Failed to install and configure nginx${reset}"
         update_failure "8"
         return 1
+    else
+        log_message "Nginx installed and configured successfully."
     fi
     update_state "8"
-    log_message "Nginx installed and configured successfully."
 }
 
 add_swap() {
@@ -264,68 +269,96 @@ add_swap() {
     fi
 
     if ! sudo mkswap /swapfile; then
-        log_error "Failed to set up swap area on swapfile"
-        echo -e "${orange}Failed to set up swap area on swapfile${reset}"
+        log_error "Failed to set up swap space on swapfile"
+        echo -e "${orange}Failed to set up swap space on swapfile${reset}"
         update_failure "4"
         return 1
     fi
 
     if ! sudo swapon /swapfile; then
-        log_error "Failed to enable swapfile"
-        echo -e "${orange}Failed to enable swapfile${reset}"
+        log_error "Failed to enable swap space on swapfile"
+        echo -e "${orange}Failed to enable swap space on swapfile${reset}"
         update_failure "4"
         return 1
     fi
 
-    # Make the swap file permanent by adding it to /etc/fstab
-    echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+    if ! echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab; then
+        log_error "Failed to add swapfile to /etc/fstab"
+        echo -e "${orange}Failed to add swapfile to /etc/fstab${reset}"
+        update_failure "4"
+        return 1
+    fi
 
     update_state "4"
     log_message "Swap space added successfully."
 }
 
-# Display menu with color indications
+# Function to display menu options
 display_menu() {
-    echo -e "${green}1. Update and upgrade${reset}"
-    echo -e "${green}2. Install Node.js v20.15.1 and npm v10.7.0${reset}"
-    echo -e "${green}3. Install pm2${reset}"
-    echo -e "${green}4. Add Swap Space${reset}"
-    echo -e "${green}5. Install MySQL${reset}"
-    echo -e "${green}6. Add authorized keys${reset}"
-    echo -e "${green}7. Add GitHub credentials to ~/.bashrc${reset}"
-    echo -e "${green}8. Install nginx${reset}"
-    echo -e "9. Exit"
-}
+    clear
+    echo -e "${pink}Choose a task:${reset}"
+    echo "1) Update and upgrade"
+    echo "2) Install Node.js and npm"
+    echo "3) Install pm2"
+    echo "4) Add Swap Space"
+    echo "5) Install MySQL"
+    echo "6) Add authorized_keys"
+    echo "7) Add to_bash content to .bashrc"
+    echo "8) Install nginx"
+    echo "r) Reset colors"
+    echo "q) Quit"
+    echo ""
 
-# Execute user's choice
-execute_choice() {
-    local choice=$1
-    case $choice in
-        1) update_and_upgrade ;;
-        2) install_nodejs_npm ;;
-        3) install_pm2 ;;
-        4) add_swap ;;
-        5) install_mysql ;;
-        6) add_authorized_keys ;;
-        7) add_to_bashrc ;;
-        8) install_nginx ;;
-        9) echo -e "${green}Exiting setup script.${reset}"; exit 0 ;;
-        *) echo -e "${orange}Invalid choice. Please try again.${reset}" ;;
-    esac
-}
-
-# Main script logic
-main() {
-    initialize_state
-
-    while true; do
-        echo -e "\n${pink}=== Setup Menu ===${reset}"
-        display_menu
-
-        read -p "Enter your choice: " user_choice
-
-        execute_choice "$user_choice"
+    for choice in $(seq 1 8); do
+        if is_executed "$choice"; then
+            echo -e "$choice) ${green}$(get_choice_description "$choice")${reset}"
+        elif is_failed "$choice"; then
+            echo -e "$choice) ${orange}$(get_choice_description "$choice")${reset}"
+        else
+            echo -e "$choice) $(get_choice_description "$choice")"
+        fi
     done
 }
 
-main
+# Function to get choice description
+get_choice_description() {
+    case $1 in
+        1) echo "Update and upgrade";;
+        2) echo "Install Node.js and npm";;
+        3) echo "Install pm2";;
+        4) echo "Add Swap Space";;
+        5) echo "Install MySQL";;
+        6) echo "Add authorized_keys";;
+        7) echo "Add to_bash content to .bashrc";;
+        8) echo "Install nginx";;
+    esac
+}
+
+# Function to reset colors
+reset_colors() {
+    > "$STATEFILE"
+    > "$FAILUREFILE"
+    log_message "All colors reset."
+}
+
+# Main script loop
+initialize_state
+
+while true; do
+    display_menu
+
+    read -p "Enter your choice: " choice
+    case $choice in
+        1) update_and_upgrade;;
+        2) install_nodejs_npm;;
+        3) install_pm2;;
+        4) add_swap;;
+        5) install_mysql;;
+        6) add_authorized_keys;;
+        7) add_to_bashrc;;
+        8) install_nginx;;
+        r) reset_colors;;
+        q) break;;
+        *) echo "Invalid choice!";;
+    esac
+done
