@@ -3,6 +3,7 @@
 LOGFILE="setup.log"
 ERRORFILE="setup_error.log"
 STATEFILE="setup_state.txt"
+FAILUREFILE="setup_failure.txt"
 
 # Define colors
 pink='\033[1;35m'    # Pink
@@ -27,6 +28,9 @@ initialize_state() {
     if [ ! -f "$STATEFILE" ]; then
         touch "$STATEFILE"
     fi
+    if [ ! -f "$FAILUREFILE" ]; then
+        touch "$FAILUREFILE"
+    fi
 }
 
 # Update the state file with the executed choice
@@ -35,10 +39,22 @@ update_state() {
     echo "$choice" >> "$STATEFILE"
 }
 
+# Update the failure file with the failed choice
+update_failure() {
+    local choice=$1
+    echo "$choice" >> "$FAILUREFILE"
+}
+
 # Check if a choice has been executed
 is_executed() {
     local choice=$1
     grep -q "^$choice$" "$STATEFILE"
+}
+
+# Check if a choice has failed
+is_failed() {
+    local choice=$1
+    grep -q "^$choice$" "$FAILUREFILE"
 }
 
 # Functions for each tool/module
@@ -46,6 +62,7 @@ update_and_upgrade() {
     log_message "Updating and upgrading..."
     if ! sudo apt-get update; then
         log_error "Failed to update package list"
+        update_failure "1"
         return 1
     else
         log_message "Package list updated successfully."
@@ -65,6 +82,7 @@ install_nodejs_npm() {
     if ! curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -; then
         log_error "Failed to download and run Node.js setup script"
         echo -e "${orange}Failed to add Node.js repository${reset}"
+        update_failure "2"
         return 1
     fi
 
@@ -73,6 +91,7 @@ install_nodejs_npm() {
     if ! sudo apt install -y nodejs; then
         log_error "Failed to install Node.js and npm"
         echo -e "${orange}Failed to install Node.js and npm${reset}"
+        update_failure "2"
         return 1
     fi
 
@@ -99,6 +118,7 @@ install_pm2() {
     if ! sudo npm install pm2@latest -g; then
         log_error "Failed to install pm2"
         echo -e "${orange}Failed to install pm2${reset}"
+        update_failure "3"
         return 1
     else
         log_message "pm2 installed successfully."
@@ -116,6 +136,7 @@ install_mysql() {
     if ! sudo apt update || ! sudo apt install mysql-server -y || ! sudo systemctl start mysql.service; then
         log_error "Failed to install and start MySQL"
         echo -e "${orange}Failed to install and start MySQL${reset}"
+        update_failure "5"
         return 1
     else
         log_message "MySQL installed and started successfully."
@@ -128,6 +149,7 @@ copy_dir_navigator() {
     if ! sudo cp dir_navigator.sh /usr/local/bin/; then
         log_error "Failed to copy dir_navigator.sh"
         echo -e "${orange}Failed to copy dir_navigator.sh${reset}"
+        update_failure "4"
         return 1
     else
         log_message "dir_navigator.sh copied successfully."
@@ -144,6 +166,7 @@ add_authorized_keys() {
     if ! mkdir -p ~/.ssh || ! touch ~/.ssh/authorized_keys || ! chmod 700 ~/.ssh || ! chmod 600 ~/.ssh/authorized_keys; then
         log_error "Failed to create ~/.ssh/authorized_keys"
         echo -e "${orange}Failed to create ~/.ssh/authorized_keys${reset}"
+        update_failure "6"
         return 1
     fi
     cp authorized_keys ~/.ssh/authorized_keys
@@ -161,6 +184,7 @@ add_to_bashrc() {
     if ! cat to_bash >> ~/.bashrc; then
         log_error "Failed to append to_bash content to ~/.bashrc"
         echo -e "${orange}Failed to append to_bash content to ~/.bashrc${reset}"
+        update_failure "7"
         return 1
     fi
     copy_dir_navigator
@@ -203,6 +227,7 @@ install_nginx() {
     if ! sudo apt-get install nginx -y || ! sudo ufw allow ssh || ! sudo ufw allow 'Nginx Full' || ! sudo ufw enable; then
         log_error "Failed to install and configure nginx"
         echo -e "${orange}Failed to install and configure nginx${reset}"
+        update_failure "8"
         return 1
     else
         log_message "Nginx installed and configured successfully."
@@ -222,6 +247,7 @@ add_swap() {
     if ! [[ "$size" =~ ^[0-9]+$ ]]; then
         log_error "Error: The size must be a positive integer."
         echo -e "${orange}Error: The size must be a positive integer.${reset}"
+        update_failure "4"
         return 1
     fi
 
@@ -231,179 +257,108 @@ add_swap() {
     if ! sudo fallocate -l "${size}G" /swapfile; then
         log_error "Failed to create swapfile"
         echo -e "${orange}Failed to create swapfile${reset}"
+        update_failure "4"
         return 1
     fi
 
     if ! sudo chmod 600 /swapfile; then
         log_error "Failed to set permissions on swapfile"
         echo -e "${orange}Failed to set permissions on swapfile${reset}"
+        update_failure "4"
         return 1
     fi
 
     if ! sudo mkswap /swapfile; then
-        log_error "Failed to format swapfile"
-        echo -e "${orange}Failed to format swapfile${reset}"
+        log_error "Failed to set up swap space on swapfile"
+        echo -e "${orange}Failed to set up swap space on swapfile${reset}"
+        update_failure "4"
         return 1
     fi
 
     if ! sudo swapon /swapfile; then
-        log_error "Failed to enable swapfile"
-        echo -e "${orange}Failed to enable swapfile${reset}"
+        log_error "Failed to enable swap space on swapfile"
+        echo -e "${orange}Failed to enable swap space on swapfile${reset}"
+        update_failure "4"
         return 1
     fi
 
-    if ! sudo cp /etc/fstab /etc/fstab.bak; then
-        log_error "Failed to backup /etc/fstab"
-        echo -e "${orange}Failed to backup /etc/fstab${reset}"
+    if ! echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab; then
+        log_error "Failed to add swapfile to /etc/fstab"
+        echo -e "${orange}Failed to add swapfile to /etc/fstab${reset}"
+        update_failure "4"
         return 1
     fi
 
-    if ! grep -q '/swapfile' /etc/fstab || ! echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab; then
-        log_error "Failed to add swapfile entry to /etc/fstab"
-        echo -e "${orange}Failed to add swapfile entry to /etc/fstab${reset}"
-        return 1
-    fi
-
-    if ! echo "
-vm.swappiness=10
-vm.vfs_cache_pressure=50
-" | sudo tee -a /etc/sysctl.conf; then
-        log_error "Failed to add sysctl parameters"
-        echo -e "${orange}Failed to add sysctl parameters${reset}"
-        return 1
-    fi
-
-    if ! sudo sysctl -p; then
-        log_error "Failed to apply new sysctl settings"
-        echo -e "${orange}Failed to apply new sysctl settings${reset}"
-        return 1
-    fi
-
-    log_message "Swap file created, configured, and sysctl settings updated successfully."
-
-    free -h
     update_state "4"
+    log_message "Swap space added successfully."
 }
 
-check_versions() {
-    log_message "Checking versions of installed software..."
-
-    local node_version=$(node -v)
-    local npm_version=$(npm -v)
-    local pm2_version=$(pm2 -v)
-    local mysql_version=$(mysql --version)
-    local nginx_version=$(nginx -v 2>&1)
-    
-    log_message "Node.js version: $node_version"
-    log_message "npm version: $npm_version"
-    log_message "PM2 version: $pm2_version"
-    log_message "MySQL version: $mysql_version"
-    log_message "Nginx version: $nginx_version"
-
-    echo "Installed versions:"
-    echo "Node.js: $node_version"
-    echo "npm: $npm_version"
-    echo "PM2: $pm2_version"
-    echo "MySQL: $mysql_version"
-    echo "Nginx: $nginx_version"
-}
-
-# Function to process ranges and individual numbers
-process_choices() {
-    local choices=$1
-    local result=""
-
-    # Split input by spaces and iterate over each part
-    for part in $choices; do
-        # Handle ranges (e.g., 1-3)
-        if [[ $part =~ ^([0-9]+)-([0-9]+)$ ]]; then
-            start=${BASH_REMATCH[1]}
-            end=${BASH_REMATCH[2]}
-            if [[ $start -le $end ]]; then
-                for ((i=start; i<=end; i++)); do
-                    result+="$i "
-                done
-            else
-                log_error "Invalid range: $part. Skipping."
-            fi
-        # Handle individual numbers
-        elif [[ $part =~ ^[0-9]+$ ]]; then
-            result+="$part "
-        else
-            log_error "Invalid input: $part. Skipping."
-        fi
-    done
-
-    echo "$result"
-}
-
-# Function to select and execute chosen tools/modules
-execute_choices() {
-    local choices=$1
-    processed_choices=$(process_choices "$choices")
-
-    for choice in $processed_choices; do
-        case $choice in
-            1) update_and_upgrade ;;
-            2) install_nodejs_npm ;;
-            3) install_pm2 ;;
-            4) add_swap ;;
-            5) install_mysql ;;
-            6) add_authorized_keys ;;
-            7) add_to_bashrc ;;
-            8) install_nginx ;;
-            9) check_versions ;;
-            *) log_error "Invalid option $choice. Skipping." ;;
-        esac
-    done
-}
-
-# Function to display menu
+# Function to display menu options
 display_menu() {
-    # clear
-    echo -e "${pink}Setup Tool Selector${reset}"
-    echo "Select the tools/modules you want to install by entering the corresponding numbers separated by spaces (or 'q' to quit):"
-    for i in {1..8}; do
-        if is_executed "$i"; then
-            echo -e "${green}${i}) ${descriptions[$i]}${reset}"
+    clear
+    echo -e "${pink}Choose a task:${reset}"
+    echo "1) Update and upgrade"
+    echo "2) Install Node.js and npm"
+    echo "3) Install pm2"
+    echo "4) Add Swap Space"
+    echo "5) Install MySQL"
+    echo "6) Add authorized_keys"
+    echo "7) Add to_bash content to .bashrc"
+    echo "8) Install nginx"
+    echo "r) Reset colors"
+    echo "q) Quit"
+    echo ""
+
+    for choice in $(seq 1 8); do
+        if is_executed "$choice"; then
+            echo -e "$choice) ${green}$(get_choice_description "$choice")${reset}"
+        elif is_failed "$choice"; then
+            echo -e "$choice) ${orange}$(get_choice_description "$choice")${reset}"
         else
-            echo "${i}) ${descriptions[$i]}"
+            echo -e "$choice) $(get_choice_description "$choice")"
         fi
     done
-    echo -n "Enter your choices: "
 }
 
-# Define tool descriptions
-declare -A descriptions
-descriptions=(
-    [1]="Update and Upgrade"
-    [2]="Install Node.js and npm"
-    [3]="Install pm2"
-    [4]="Add Swap Space"
-    [5]="Install MySQL"
-    [6]="Add Authorized Keys"
-    [7]="Add GitHub Credentials to ~/.bashrc"
-    [8]="Install Nginx"
-    [9]="Check Installed Versions"
-)
+# Function to get choice description
+get_choice_description() {
+    case $1 in
+        1) echo "Update and upgrade";;
+        2) echo "Install Node.js and npm";;
+        3) echo "Install pm2";;
+        4) echo "Add Swap Space";;
+        5) echo "Install MySQL";;
+        6) echo "Add authorized_keys";;
+        7) echo "Add to_bash content to .bashrc";;
+        8) echo "Install nginx";;
+    esac
+}
+
+# Function to reset colors
+reset_colors() {
+    > "$STATEFILE"
+    > "$FAILUREFILE"
+    log_message "All colors reset."
+}
 
 # Main script loop
 initialize_state
 
 while true; do
     display_menu
-    read -r user_choices
 
-    # Check if the user wants to quit
-    if [[ "$user_choices" == "q" ]]; then
-        log_message "User chose to quit."
-        echo "Exiting..."
-        break
-    fi
-
-    # Execute selected choices
-    execute_choices "$user_choices"
-    
-    log_message "Setup complete."
-    echo "Please run 'source ~/.bashrc' if ~/.bashrc was modified."
+    read -p "Enter your choice: " choice
+    case $choice in
+        1) update_and_upgrade;;
+        2) install_nodejs_npm;;
+        3) install_pm2;;
+        4) add_swap;;
+        5) install_mysql;;
+        6) add_authorized_keys;;
+        7) add_to_bashrc;;
+        8) install_nginx;;
+        r) reset_colors;;
+        q) break;;
+        *) echo "Invalid choice!";;
+    esac
 done
