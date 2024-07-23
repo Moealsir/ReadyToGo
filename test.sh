@@ -272,12 +272,13 @@ execute_choices() {
         case $choice in
             1) update_and_upgrade ;;
             2) install_nodejs_npm ;;
-            3) add_swap ;;
-            4) install_mysql ;;
-            5) add_authorized_keys ;;
-            6) add_to_bashrc ;;
-            7) install_nginx ;;
-            8) check_versions ;;
+            3) install_pm2 ;;
+            4) add_swap ;;
+            5) install_mysql ;;
+            6) add_authorized_keys ;;
+            7) add_to_bashrc ;;
+            8) install_nginx ;;
+            9) check_versions ;;
             *) log_error "Invalid option $choice. Skipping." ;;
         esac
     done
@@ -303,12 +304,13 @@ declare -A descriptions
 descriptions=(
     [1]="Update and Upgrade"
     [2]="Install Node.js and npm"
-    [3]="Add Swap Space"
-    [4]="Install MySQL"
-    [5]="Add Authorized Keys"
-    [6]="Add GitHub Credentials to ~/.bashrc"
-    [7]="Install Nginx"
-    [8]="Check Installed Versions"
+    [3]="Install pm2"
+    [4]="Add Swap Space"
+    [5]="Install MySQL"
+    [6]="Add Authorized Keys"
+    [7]="Add GitHub Credentials to ~/.bashrc"
+    [8]="Install Nginx"
+    [9]="Check Installed Versions"
 )
 
 # Function to reset the color
