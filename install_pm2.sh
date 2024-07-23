@@ -4,6 +4,12 @@ install_pm2() {
         return
     fi
 
+    if ! command -v node &> /dev/null || ! command -v npm &> /dev/null; then
+        log_message "Node.js and npm are not installed. Please install them first."
+        echo -e "${orange}Node.js and npm are not installed. Please install them first.${reset}"
+        return 1
+    fi
+
     log_message "Installing pm2..."
     if ! sudo npm install pm2@latest -g; then
         log_error "Failed to install pm2"
