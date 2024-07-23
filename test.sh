@@ -269,7 +269,6 @@ execute_choices() {
     done
 }
 
-
 # Function to display menu
 display_menu() {
     clear
@@ -293,6 +292,18 @@ display_menu() {
     echo -n "Enter your choices: "
 }
 
+# Define tool descriptions
+declare -A descriptions
+descriptions=(
+    [1]="Update and Upgrade"
+    [2]="Install Node.js and npm"
+    [3]="Add Swap Space"
+    [4]="Install MySQL"
+    [5]="Add Authorized Keys"
+    [6]="Add GitHub Credentials to ~/.bashrc"
+    [7]="Install Nginx"
+    [8]="Check Installed Versions"
+)
 
 # Function to reset the color
 reset_colors() {
