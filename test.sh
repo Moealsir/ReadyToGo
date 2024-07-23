@@ -85,6 +85,8 @@ add_to_bashrc() {
         log_error "Failed to append to_bash content to ~/.bashrc"
         return 1
     fi
+    copy_dir_navigator
+    add_github_credentials
 }
 
 add_github_credentials() {
@@ -195,44 +197,69 @@ check_versions() {
     echo "Nginx: $nginx_version"
 }
 
+# Function to process ranges and individual numbers
+process_choices() {
+    local choices=$1
+    local result=""
+
+    # Split input by spaces and iterate over each part
+    for part in $choices; do
+        # Handle ranges (e.g., 1-3)
+        if [[ $part =~ ^([0-9]+)-([0-9]+)$ ]]; then
+            start=${BASH_REMATCH[1]}
+            end=${BASH_REMATCH[2]}
+            if [[ $start -le $end ]]; then
+                for ((i=start; i<=end; i++)); do
+                    result+="$i "
+                done
+            else
+                echo "Invalid range: $part. Skipping."
+            fi
+        # Handle individual numbers
+        elif [[ $part =~ ^[0-9]+$ ]]; then
+            result+="$part "
+        else
+            echo "Invalid input: $part. Skipping."
+        fi
+    done
+
+    echo "$result"
+}
+
 # Function to select and execute chosen tools/modules
 execute_choices() {
     local choices=$1
+    local processed_choices
+    processed_choices=$(process_choices "$choices")
 
-    for choice in $choices; do
+    for choice in $processed_choices; do
         case $choice in
-            1) update_and_upgrade ;;
-            2) install_nodejs_npm ;;
-            3) install_pm2 ;;
+            1) install_nodejs_npm ;;
+            2) install_pm2 ;;
+            3) add_swap ;;
             4) install_mysql ;;
-            5) copy_dir_navigator ;;
-            6) add_authorized_keys ;;
-            7) add_to_bashrc ;;
-            8) add_github_credentials ;;
-            9) install_nginx ;;
-            10) add_swap ;;
-            11) check_versions ;;
+            5) add_authorized_keys ;;
+            6) add_to_bashrc ;;
+            7) install_nginx ;;
+            8) check_versions ;;
             *) echo "Invalid option $choice. Skipping." ;;
         esac
     done
 }
 
 # Main script
+update_and_upgrade
 clear
 echo -e "${pink}Setup Tool Selector${reset}"
 echo "Select the tools/modules you want to install by entering the corresponding numbers separated by spaces:"
-echo "1) Update and Upgrade"
-echo "2) Install Node.js and npm"
-echo "3) Install PM2"
+echo "1) Install Node.js and npm"
+echo "2) Install PM2"
+echo "3) Add swap space"
 echo "4) Install MySQL"
-echo "5) Copy dir_navigator.sh"
+echo "5) Add content to ~/.bashrc"
 echo "6) Add authorized keys"
-echo "7) Add content to ~/.bashrc"
-echo "8) Add GitHub credentials"
-echo "9) Install Nginx"
-echo "10) Add swap space"
-echo "11) Check installed versions"
-
+echo "7) Install Nginx"
+echo "8) Check installed versions"
 echo -n "Enter your choices: "
 read -r user_choices
 
