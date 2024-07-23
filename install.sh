@@ -74,7 +74,7 @@ copy_dir_navigator() {
     clear
 }
 
-
+# Function to add authorized keys
 add_authorized_keys() {
     log_message "Adding authorized keys..."
     if ! mkdir -p ~/.ssh || ! touch ~/.ssh/authorized_keys || ! chmod 700 ~/.ssh || ! chmod 600 ~/.ssh/authorized_keys; then
@@ -83,7 +83,6 @@ add_authorized_keys() {
     fi
     cp authorized_keys ~/.ssh/authorized_keys
     clear
-
 }
 
 # Function to add to_bash content to ~/.bashrc
@@ -125,12 +124,21 @@ install_nginx() {
 
 # Function to add swap space
 add_swap() {
-    log_message "Adding swap space..."
-    if ! sudo fallocate -l 1G /swapfile; then
+    read -p "Enter the size of swap space in GB: " size
+
+    # Check if the input is a positive integer
+    if ! [[ "$size" =~ ^[0-9]+$ ]]; then
+        log_error "Error: The size must be a positive integer."
+        return 1
+    fi
+
+    log_message "Adding swap space of ${size}G..."
+
+    # Create the swap file
+    if ! sudo fallocate -l "${size}G" /swapfile; then
         log_error "Failed to create swapfile"
         return 1
     fi
-    ls -lh /swapfile
 
     if ! sudo chmod 600 /swapfile; then
         log_error "Failed to set permissions on swapfile"
@@ -142,15 +150,37 @@ add_swap() {
         return 1
     fi
 
+    if ! sudo swapon /swapfile; then
+        log_error "Failed to enable swapfile"
+        return 1
+    fi
+
     if ! sudo cp /etc/fstab /etc/fstab.bak; then
         log_error "Failed to backup /etc/fstab"
         return 1
     fi
 
-    if ! echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab; then
+    if ! grep -q '/swapfile' /etc/fstab || ! echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab; then
         log_error "Failed to add swapfile entry to /etc/fstab"
         return 1
     fi
+
+    if ! echo "
+vm.swappiness=10
+vm.vfs_cache_pressure=50
+" | sudo tee -a /etc/sysctl.conf; then
+        log_error "Failed to add sysctl parameters"
+        return 1
+    fi
+
+    if ! sudo sysctl -p; then
+        log_error "Failed to apply new sysctl settings"
+        return 1
+    fi
+
+    log_message "Swap file created, configured, and sysctl settings updated successfully."
+
+    free -h
     clear
 }
 
@@ -190,6 +220,8 @@ install_nodejs_npm
 prompt_user
 install_pm2
 prompt_user
+add_swap
+prompt_user
 install_mysql
 prompt_user
 copy_dir_navigator
@@ -202,8 +234,7 @@ add_github_credentials
 prompt_user
 install_nginx
 prompt_user
-add_swap
-prompt_user
+
 
 log_message "Setup complete."
 check_versions
