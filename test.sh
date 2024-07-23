@@ -297,17 +297,17 @@ add_swap() {
 display_menu() {
     clear
     echo -e "${pink}Choose a task:${reset}"
-    echo "1) Update and upgrade"
-    echo "2) Install Node.js and npm"
-    echo "3) Install pm2"
-    echo "4) Add Swap Space"
-    echo "5) Install MySQL"
-    echo "6) Add authorized_keys"
-    echo "7) Add to_bash content to .bashrc"
-    echo "8) Install nginx"
-    echo "r) Reset colors"
-    echo "q) Quit"
-    echo ""
+    # echo "1) Update and upgrade"
+    # echo "2) Install Node.js and npm"
+    # echo "3) Install pm2"
+    # echo "4) Add Swap Space"
+    # echo "5) Install MySQL"
+    # echo "6) Add authorized_keys"
+    # echo "7) Add to_bash content to .bashrc"
+    # echo "8) Install nginx"
+    # echo "r) Reset colors"
+    # echo "q) Quit"
+    # echo ""
 
     for choice in $(seq 1 8); do
         if is_executed "$choice"; then
@@ -331,6 +331,7 @@ get_choice_description() {
         6) echo "Add authorized_keys";;
         7) echo "Add to_bash content to .bashrc";;
         8) echo "Install nginx";;
+        r) echo "Reset colors";;
     esac
 }
 
