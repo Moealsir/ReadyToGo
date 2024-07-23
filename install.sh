@@ -22,6 +22,11 @@ update_and_upgrade() {
         log_error "Failed to update package list"
         return 1
     fi
+    # Uncomment the line below if you want to perform the upgrade
+    # if ! sudo apt-get upgrade -y; then
+    #     log_error "Failed to upgrade packages"
+    #     return 1
+    # fi
     clear
 }
 
@@ -106,6 +111,39 @@ install_nginx() {
     clear
 }
 
+# Function to add swap space
+add_swap() {
+    log_message "Adding swap space..."
+    if ! sudo fallocate -l 1G /swapfile; then
+        log_error "Failed to create swapfile"
+        return 1
+    fi
+    ls -lh /swapfile
+
+    if ! sudo chmod 600 /swapfile; then
+        log_error "Failed to set permissions on swapfile"
+        return 1
+    fi
+
+    if ! sudo mkswap /swapfile; then
+        log_error "Failed to format swapfile"
+        return 1
+    fi
+
+    if ! sudo cp /etc/fstab /etc/fstab.bak; then
+        log_error "Failed to backup /etc/fstab"
+        return 1
+    fi
+
+    if ! echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab; then
+        log_error "Failed to add swapfile entry to /etc/fstab"
+        return 1
+    fi
+    clear
+}
+
+
+
 # Main script execution
 update_and_upgrade
 install_nodejs_npm
@@ -115,6 +153,7 @@ copy_dir_navigator
 add_to_bashrc
 add_github_credentials
 install_nginx
+add_swap
 
 log_message "Setup complete."
-log_message "Run command source ~/.bashrc"
+log_message "Please run source ~/.bashrc"
