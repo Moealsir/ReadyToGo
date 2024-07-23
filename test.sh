@@ -309,7 +309,7 @@ display_menu() {
     # echo "q) Quit"
     # echo ""
 
-    for choice in $(seq 1 9); do
+    for choice in $(seq 0 8); do
         if is_executed "$choice"; then
             echo -e "$choice) ${green}$(get_choice_description "$choice")${reset}"
         elif is_failed "$choice"; then
