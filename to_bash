@@ -232,7 +232,7 @@ vm.vfs_cache_pressure=50
 
     echo "Swap file created, configured, and sysctl settings updated successfully."
 
-    Free -h
+    free -h
 }
 
 
