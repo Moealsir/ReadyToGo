@@ -21,13 +21,13 @@ functions = {
     'update_and_upgrade': 'Update and Upgrade System',
     'install_nodejs_npm': 'Install Node.js and npm',
     'install_pm2': 'Install PM2',
+    'add_swap': 'Add Swap Space',
     'install_mysql': 'Install MySQL',
     'copy_dir_navigator': 'Copy dir_navigator.sh',
     'add_authorized_keys': 'Add Authorized Keys',
     'add_to_bashrc': 'Add to ~/.bashrc',
     'add_github_credentials': 'Add GitHub Credentials',
-    'install_nginx': 'Install Nginx',
-    'add_swap': 'Add Swap Space'
+    'install_nginx': 'Install Nginx'
 }
 
 def run_function(func_name):
