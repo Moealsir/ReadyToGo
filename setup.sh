@@ -12,23 +12,23 @@ orange='\033[0;33m'  # Orange
 reset='\033[0m'      # Reset color
 
 # Load module scripts
-source update_and_upgrade.sh
-source install_nodejs_npm.sh
-source install_pm2.sh
-source install_mysql.sh
-source add_swap.sh
-source add_authorized_keys.sh
-source add_to_bashrc.sh
-source install_nginx.sh
-source configure_firewall.sh
-source install_ssl.sh
-source install_docker.sh
-source install_fail2ban.sh
-source manage_users.sh
-source configure_backups.sh
-source install_monitoring_tools.sh
-source configure_log_rotation.sh
-source schedule_security_updates.sh
+source scripts/update_and_upgrade.sh
+source scripts/install_nodejs_npm.sh
+source scripts/install_pm2.sh
+source scripts/install_mysql.sh
+source scripts/add_swap.sh
+source scripts/add_authorized_keys.sh
+source scripts/add_to_bashrc.sh
+source scripts/install_nginx.sh
+source scripts/configure_firewall.sh
+source scripts/install_ssl.sh
+source scripts/install_docker.sh
+source scripts/install_fail2ban.sh
+source scripts/manage_users.sh
+source scripts/configure_backups.sh
+source scripts/install_monitoring_tools.sh
+source scripts/configure_log_rotation.sh
+source scripts/schedule_security_updates.sh
 
 # Function to log messages
 log_message() {
