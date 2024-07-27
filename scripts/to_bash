@@ -47,8 +47,18 @@ re() {
         eval "$(dir_navigator.sh "$1")"
     else
         while true; do
-            # Display directory history
-            dir_navigator.sh
+            # Display directory history with color differentiation
+            dir_navigator.sh | awk '{
+                colors[0]="\033[34m"; # Blue
+                colors[1]="\033[31m"; # Red
+                colors[2]="\033[32m"; # Green
+                colors[3]="\033[37m"; # White
+                colors[4]="\033[33m"; # Yellow
+                colors[5]="\033[36m"; # Cyan
+                colors[6]="\033[35m"; # Magenta
+                reset="\033[0m";
+                print colors[NR % 7] $0 reset
+            }'
 
             # Prompt the user
             echo "Enter a number to change directory, 'c' to clear history, 'd' to delete, or 'q' to quit."
